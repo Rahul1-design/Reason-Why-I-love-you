@@ -103,7 +103,9 @@ export default function LoveReasons() {
     ? LOVE_REASONS 
     : LOVE_REASONS.filter(r => r.mood === selectedMood);
 
-  const currentReason = filteredReasons[currentReasonIndex];
+  // Ensure currentReasonIndex is within bounds
+  const safeIndex = Math.min(currentReasonIndex, filteredReasons.length - 1);
+  const currentReason = filteredReasons[safeIndex] || filteredReasons[0];
   const progress = (viewedReasons.size / LOVE_REASONS.length) * 100;
 
   useEffect(() => {
@@ -171,8 +173,12 @@ export default function LoveReasons() {
   };
 
   const toggleFavorite = useCallback(() => {
+    if (!currentReason) return;
+    
     playClick();
     const actualIndex = LOVE_REASONS.findIndex(r => r.text === currentReason.text);
+    if (actualIndex === -1) return;
+    
     setFavorites(prev => {
       const newFavorites = new Set(prev);
       if (newFavorites.has(actualIndex)) {
@@ -194,6 +200,8 @@ export default function LoveReasons() {
   }, [currentReason, playClick, toast]);
 
   const handleShare = useCallback(async () => {
+    if (!currentReason) return;
+    
     playClick();
     try {
       if (navigator.share) {
@@ -235,8 +243,8 @@ export default function LoveReasons() {
     });
   }, [playSuccess, toast]);
 
-  const actualIndex = LOVE_REASONS.findIndex(r => r.text === currentReason?.text);
-  const isFavorite = favorites.has(actualIndex);
+  const actualIndex = currentReason ? LOVE_REASONS.findIndex(r => r.text === currentReason.text) : -1;
+  const isFavorite = actualIndex >= 0 && favorites.has(actualIndex);
   const favoriteReasons = Array.from(favorites)
     .sort((a, b) => a - b)
     .map(index => LOVE_REASONS[index].text);
@@ -357,7 +365,7 @@ export default function LoveReasons() {
               showReason && !isAnimating ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            {currentReason?.text}
+            {currentReason?.text || ''}
           </p>
         </div>
 
